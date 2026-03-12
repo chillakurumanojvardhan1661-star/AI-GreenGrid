@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demand Heatmap | AI GreenGrid</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: rgba(5, 6, 10, 0.95); border-right: 1px solid var(--glass-border); padding: 30px; display: flex; flex-direction: column; position: fixed; height: 100vh; }
+        .main-content { flex: 1; margin-left: 260px; padding: 30px 5%; background: #05060a; display: flex; flex-direction: column; }
+        #map { flex: 1; border-radius: 20px; border: 1px solid var(--glass-border); overflow: hidden; margin-top: 20px; background: #0a0b10; }
+        .map-overlay { position: absolute; top: 120px; right: 50px; width: 300px; padding: 20px; z-index: 1000; }
+        .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.8rem; }
+        .color-box { width: 12px; height: 12px; border-radius: 2px; }
+        .leaflet-container { background: #05060a !important; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="../index.html" class="logo">AI GREENGRID</a>
+        <nav style="display: flex; flex-direction: column;">
+            <a href="dashboard.html" class="side-link"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="#" class="side-link active"><i class="fas fa-map-marked-alt"></i> Demand Heatmap</a>
+            <a href="digital-twin.html" class="side-link"><i class="fas fa-cube"></i> Digital Twin</a>
+            <a href="../analytics.html" class="side-link"><i class="fas fa-chart-line"></i> Analytics</a>
+            <div style="margin-top: auto;">
+                <a href="#" class="side-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 class="glow-text">Geospatial Demand Heatmap</h1>
+                <p style="color: var(--text-secondary);">Real-time regional electricity load (via Leaflet.js)</p>
+            </div>
+        </header>
+
+        <div class="map-overlay glass">
+            <h4 style="margin-bottom: 15px;">Live Legend</h4>
+            <div class="legend-item"><div class="color-box" style="background: red;"></div> <span>Critical Load (> 800 MW)</span></div>
+            <div class="legend-item"><div class="color-box" style="background: orange;"></div> <span>High Demand (500 - 800 MW)</span></div>
+            <div class="legend-item"><div class="color-box" style="background: blue;"></div> <span>Normal Load (< 500 MW)</span></div>
+            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 15px 0;">
+            <div id="active-units" style="font-size: 0.8rem; color: var(--text-secondary);">
+                Detecting units...
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS & Heat Plugin -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/socket-client.js"></script>
+    <script>
+        checkAuth('admin');
+
+        let map, heatLayer;
+
+        function initMap() {
+            map = L.map('map', {
+                center: [39.8283, -98.5795],
+                zoom: 4,
+                zoomControl: false
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(map);
+
+            heatLayer = L.heatLayer([], {
+                radius: 40,
+                blur: 25,
+                maxZoom: 10,
+                gradient: {0.4: 'blue', 0.65: 'orange', 1: 'red'}
+            }).addTo(map);
+
+            fetchRegions();
+        }
+
+        async function fetchRegions() {
+            try {
+                const res = await fetch('http://localhost:3000/api/grid/regions');
+                const regions = await res.json();
+                updateHeatmap(regions);
+            } catch (e) {
+                console.error('Failed to fetch regions:', e);
+            }
+        }
+
+        function updateHeatmap(regions) {
+            const points = regions.map(r => [r.lat, r.lng, r.demand / 200]);
+            heatLayer.setLatLngs(points);
+
+            const unitsDiv = document.getElementById('active-units');
+            unitsDiv.innerHTML = regions.map(r => `
+                <div style="margin-bottom: 5px; display: flex; justify-content: space-between;">
+                    <span>${r.name}</span> <span>${r.demand} MW</span>
+                </div>
+            `).join('');
+        }
+
+        window.addEventListener('liveGridUpdate', fetchRegions);
+
+        initMap();
+    </script>
+</body>
+</html>

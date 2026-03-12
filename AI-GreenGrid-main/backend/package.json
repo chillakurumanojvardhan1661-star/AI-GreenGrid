@@ -1,0 +1,28 @@
+{
+  "name": "ai-greengrid",
+  "version": "1.0.0",
+  "description": "AI GreenGrid is a futuristic smart energy management platform designed to optimize renewable energy usage, improve power grid efficiency, and empower citizens to actively participate in sustainable energy consumption.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chillakurumanojvardhan1661-star/AI-GreenGrid.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/chillakurumanojvardhan1661-star/AI-GreenGrid/issues"
+  },
+  "homepage": "https://github.com/chillakurumanojvardhan1661-star/AI-GreenGrid#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mongoose": "^9.3.0",
+    "socket.io": "^4.8.3"
+  }
+}

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Analytics | AI GreenGrid</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #05060a; }
+        .container { padding: 40px 5%; margin-top: 80px; }
+
+        /* ── Range Controls ── */
+        .range-bar {
+            display: flex; align-items: center; gap: 12px;
+            flex-wrap: wrap; margin-bottom: 32px;
+            padding: 18px 24px; border-radius: 14px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+        }
+        .range-bar .range-label { color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
+        .preset-btn {
+            padding: 8px 16px; font-size: 0.78rem; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border); color: var(--text-secondary);
+            cursor: pointer; border-radius: 6px; font-family: var(--font-main);
+            transition: all 0.2s;
+        }
+        .preset-btn:hover { background: rgba(0,242,255,0.1); color: var(--accent-cyan); border-color: var(--accent-cyan); }
+        .preset-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); font-weight: 700; }
+        .divider-v { width: 1px; height: 28px; background: var(--glass-border); margin: 0 4px; }
+
+        /* Custom Range Section */
+        .custom-range-wrapper { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .custom-range-wrapper label { color: var(--text-secondary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; }
+        .date-input {
+            padding: 8px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+            border-radius: 6px; color: white; font-family: var(--font-main); font-size: 0.82rem;
+            outline: none; cursor: pointer;
+            color-scheme: dark;
+        }
+        .date-input:focus { border-color: var(--accent-cyan); }
+        .apply-btn {
+            padding: 8px 18px; background: linear-gradient(135deg, #7000ff, #00f2ff);
+            border: none; border-radius: 6px; color: white; font-family: var(--font-main);
+            font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+        }
+        .apply-btn:hover { opacity: 0.85; }
+
+        /* Active Range Badge */
+        .active-range-badge {
+            margin-left: auto; padding: 6px 14px; border-radius: 20px;
+            background: rgba(0,242,255,0.1); border: 1px solid rgba(0,242,255,0.3);
+            color: var(--accent-cyan); font-size: 0.75rem; font-weight: 600;
+        }
+
+        /* Summary Cards */
+        .summary-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .sum-card { padding: 20px 22px; }
+        .sum-card .s-label { color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+        .sum-card .s-value { font-size: 1.8rem; font-weight: 800; color: white; }
+        .sum-card .s-sub { font-size: 0.72rem; margin-top: 4px; }
+        .s-sub.green { color: #00ff7f; } .s-sub.red { color: #ff4d4d; } .s-sub.blue { color: var(--accent-cyan); }
+
+        /* Charts */
+        .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 28px; }
+        .chart-box { padding: 26px; }
+        .chart-box h3 { font-size: 1rem; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+        .chart-box h3 i { color: var(--accent-cyan); }
+        .chart-wrap { position: relative; height: 280px; }
+
+        /* Bottom Row */
+        .bottom-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+        /* Progress bars */
+        .progress-item { margin-bottom: 16px; }
+        .progress-item .p-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px; }
+        .progress-item .p-label span:last-child { color: white; font-weight: 600; }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; }
+        .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="logo">AI GREENGRID</a>
+        <div class="nav-links">
+            <a href="#" onclick="history.back()">← Back</a>
+            <a href="#" class="active">Analytics</a>
+            <a href="billing.html">Billing</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header style="margin-bottom:28px;">
+            <h1 class="glow-text">Grid Analytics</h1>
+            <p style="color:var(--text-secondary);">AI-powered insights into energy generation, demand, and conservation — for the selected period.</p>
+        </header>
+
+        <!-- ── Range Selector ── -->
+        <div class="range-bar">
+            <span class="range-label"><i class="fas fa-calendar-alt"></i> Period</span>
+            <button class="preset-btn" id="btn-1D" onclick="applyPreset('1D')">1D</button>
+            <button class="preset-btn active" id="btn-1W" onclick="applyPreset('1W')">1W</button>
+            <button class="preset-btn" id="btn-1M" onclick="applyPreset('1M')">1M</button>
+            <button class="preset-btn" id="btn-3M" onclick="applyPreset('3M')">3M</button>
+            <button class="preset-btn" id="btn-1Y" onclick="applyPreset('1Y')">1Y</button>
+
+            <div class="divider-v"></div>
+
+            <div class="custom-range-wrapper">
+                <label>Custom:</label>
+                <input type="date" id="date-from" class="date-input">
+                <span style="color:var(--text-secondary);font-size:0.8rem;">to</span>
+                <input type="date" id="date-to" class="date-input">
+                <button class="apply-btn" onclick="applyCustomRange()">
+                    <i class="fas fa-filter"></i> Apply
+                </button>
+            </div>
+
+            <div class="active-range-badge" id="active-range-badge">
+                <i class="fas fa-clock"></i> Last 7 Days
+            </div>
+        </div>
+
+        <!-- ── Summary KPIs ── -->
+        <div class="summary-row">
+            <div class="sum-card glass">
+                <div class="s-label">Total Generation</div>
+                <div class="s-value" id="kpi-gen">—</div>
+                <div class="s-sub blue" id="kpi-gen-sub">Calculating...</div>
+            </div>
+            <div class="sum-card glass">
+                <div class="s-label">Total Demand</div>
+                <div class="s-value" id="kpi-demand">—</div>
+                <div class="s-sub red" id="kpi-demand-sub">Calculating...</div>
+            </div>
+            <div class="sum-card glass">
+                <div class="s-label">Hydro Conserved</div>
+                <div class="s-value" id="kpi-hydro">—</div>
+                <div class="s-sub green" id="kpi-hydro-sub">Water saved</div>
+            </div>
+            <div class="sum-card glass">
+                <div class="s-label">Energy Price (Avg)</div>
+                <div class="s-value" id="kpi-price">—</div>
+                <div class="s-sub blue">₹ per kWh</div>
+            </div>
+            <div class="sum-card glass">
+                <div class="s-label">Renewable %</div>
+                <div class="s-value" id="kpi-renewable">—</div>
+                <div class="s-sub green" id="kpi-renew-sub">Of total generation</div>
+            </div>
+        </div>
+
+        <!-- ── Main Charts ── -->
+        <div class="analytics-grid">
+            <div class="chart-box glass">
+                <h3><i class="fas fa-chart-area"></i> Generation vs Demand — <span id="chart-period-label" style="color:var(--text-secondary);font-weight:400;font-size:0.85rem;">Last 7 Days</span></h3>
+                <div class="chart-wrap">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-box glass">
+                <h3><i class="fas fa-chart-pie"></i> Source Mix</h3>
+                <div class="chart-wrap">
+                    <canvas id="mixChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Bottom Row ── -->
+        <div class="bottom-row">
+            <div class="chart-box glass">
+                <h3><i class="fas fa-leaf"></i> Hydro Conservation</h3>
+                <div class="chart-wrap" style="height:220px;">
+                    <canvas id="hydroChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-box glass">
+                <h3><i class="fas fa-rupee-sign"></i> Energy Cost (₹/kWh)</h3>
+                <div class="chart-wrap" style="height:220px;">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-box glass">
+                <h3><i class="fas fa-bullseye"></i> Grid Targets</h3>
+                <div style="margin-top:8px;">
+                    <div class="progress-item">
+                        <div class="p-label"><span>Net Zero Progress</span><span id="p-netzero">75%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="fill-netzero" style="width:75%;background:var(--accent-cyan);box-shadow:var(--glow-cyan);"></div></div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="p-label"><span>Hydro Conservation</span><span id="p-hydro">62%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="fill-hydro" style="width:62%;background:#0099ff;"></div></div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="p-label"><span>Solar Adoption</span><span id="p-solar">88%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="fill-solar" style="width:88%;background:#ffcc00;"></div></div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="p-label"><span>Wind Utilisation</span><span id="p-wind">54%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="fill-wind" style="width:54%;background:#00c8ff;"></div></div>
+                    </div>
+                    <div class="progress-item">
+                        <div class="p-label"><span>Carbon Offset Goal</span><span id="p-carbon">41%</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="fill-carbon" style="width:41%;background:#00ff7f;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        Chart.defaults.color = '#a0a0c0';
+        Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+
+        // ── Data Generator (simulated per range) ──
+        function generateData(points, base, variance, seed = 1) {
+            const out = [];
+            let v = base;
+            for (let i = 0; i < points; i++) {
+                v += (Math.random() - 0.5) * variance * seed;
+                v = Math.max(base * 0.4, v);
+                out.push(Math.round(v));
+            }
+            return out;
+        }
+
+        function makeLabels(count, unit) {
+            const labels = [];
+            const now = new Date();
+            for (let i = count - 1; i >= 0; i--) {
+                const d = new Date(now);
+                if (unit === 'hour') d.setHours(d.getHours() - i);
+                else if (unit === 'day') d.setDate(d.getDate() - i);
+                else if (unit === 'week') d.setDate(d.getDate() - i * 7);
+                else if (unit === 'month') d.setMonth(d.getMonth() - i);
+
+                if (unit === 'hour')  labels.push(d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                else if (unit === 'day') labels.push(d.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+                else if (unit === 'week') labels.push('Wk ' + (i === 0 ? 'Now' : '-' + i));
+                else labels.push(d.toLocaleDateString([], { month: 'short', year: '2-digit' }));
+            }
+            return labels;
+        }
+
+        function makeCustomLabels(from, to) {
+            const labels = [];
+            const days = Math.round((to - from) / (1000 * 60 * 60 * 24));
+            const step = Math.max(1, Math.floor(days / 14));
+            for (let d = new Date(from); d <= to; d.setDate(d.getDate() + step)) {
+                labels.push(new Date(d).toLocaleDateString([], { month: 'short', day: 'numeric' }));
+            }
+            return labels;
+        }
+
+        // ── Chart Instances ──
+        const mainChart = new Chart(document.getElementById('mainChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: [], datasets: [
+                { label: 'Solar (MW)',  data: [], borderColor: '#ffcc00', backgroundColor: 'rgba(255,204,0,0.08)', tension: 0.4, fill: true },
+                { label: 'Wind (MW)',   data: [], borderColor: '#00c8ff', backgroundColor: 'rgba(0,200,255,0.06)', tension: 0.4, fill: true },
+                { label: 'Hydro (MW)', data: [], borderColor: '#0066ff', backgroundColor: 'rgba(0,102,255,0.06)', tension: 0.4, fill: true },
+                { label: 'Demand (MW)',data: [], borderColor: '#ff4d4d', backgroundColor: 'rgba(255,77,77,0.04)', tension: 0.4, fill: false, borderDash: [6,3] }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } } }
+        });
+
+        const mixChart = new Chart(document.getElementById('mixChart').getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['Solar', 'Wind', 'Hydro'], datasets: [{ data: [40, 35, 25], backgroundColor: ['#ffcc00', '#00c8ff', '#0066ff'], borderWidth: 0 }] },
+            options: { cutout: '65%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+        });
+
+        const hydroChart = new Chart(document.getElementById('hydroChart').getContext('2d'), {
+            type: 'bar',
+            data: { labels: [], datasets: [
+                { label: 'Hydro Used (MW)', data: [], backgroundColor: 'rgba(0,102,255,0.5)', borderColor: '#0066ff', borderWidth: 1 },
+                { label: 'Hydro Saved (MW)',data: [], backgroundColor: 'rgba(0,255,127,0.25)', borderColor: '#00ff7f', borderWidth: 1 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+
+        const priceChart = new Chart(document.getElementById('priceChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: '₹/kWh', data: [], borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.1)', tension: 0.4, fill: true }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } } }
+        });
+
+        // ── Preset Configs ──
+        const presets = {
+            '1D': { points: 24, unit: 'hour',  label: 'Last 24 Hours',  demandBase: 1400,  genBase: 1100,  priceBase: 6.2  },
+            '1W': { points: 7,  unit: 'day',   label: 'Last 7 Days',    demandBase: 1350,  genBase: 1050,  priceBase: 5.8  },
+            '1M': { points: 30, unit: 'day',   label: 'Last 30 Days',   demandBase: 1500,  genBase: 1200,  priceBase: 6.5  },
+            '3M': { points: 12, unit: 'week',  label: 'Last 3 Months',  demandBase: 1600,  genBase: 1300,  priceBase: 7.0  },
+            '1Y': { points: 12, unit: 'month', label: 'Last 12 Months', demandBase: 1800,  genBase: 1500,  priceBase: 7.8  }
+        };
+
+        let currentPreset = '1W';
+
+        function applyPreset(key) {
+            currentPreset = key;
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + key).classList.add('active');
+            const cfg = presets[key];
+            document.getElementById('active-range-badge').innerHTML = '<i class="fas fa-clock"></i> ' + cfg.label;
+            document.getElementById('chart-period-label').innerText = cfg.label;
+            refreshCharts(cfg.points, cfg.unit, cfg.demandBase, cfg.genBase, cfg.priceBase, cfg.label);
+        }
+
+        function applyCustomRange() {
+            const fromVal = document.getElementById('date-from').value;
+            const toVal   = document.getElementById('date-to').value;
+            if (!fromVal || !toVal) { alert('Please select both a start and end date.'); return; }
+            const from = new Date(fromVal);
+            const to   = new Date(toVal);
+            if (from >= to) { alert('Start date must be before end date.'); return; }
+
+            const days = Math.round((to - from) / (1000 * 60 * 60 * 24));
+            const labels = makeCustomLabels(from, to);
+            const points = labels.length;
+            const label  = fromVal + ' → ' + toVal;
+
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('active-range-badge').innerHTML = '<i class="fas fa-calendar-check"></i> ' + label;
+            document.getElementById('chart-period-label').innerText = label;
+            refreshCharts(points, 'custom', 1400, 1100, 6.5, label, labels);
+        }
+
+        function refreshCharts(points, unit, demandBase, genBase, priceBase, label, customLabels) {
+            const labels = customLabels || makeLabels(points, unit);
+            const solar  = generateData(points, genBase * 0.45, 200);
+            const wind   = generateData(points, genBase * 0.35, 150);
+            const demand = generateData(points, demandBase, 220);
+            const hydro  = demand.map((d, i) => Math.max(0, d - solar[i] - wind[i]));
+            const conserved = hydro.map(h => Math.floor(h * 0.3));
+            const prices  = generateData(points, priceBase, 1.5);
+
+            // Main chart
+            mainChart.data.labels = labels;
+            mainChart.data.datasets[0].data = solar;
+            mainChart.data.datasets[1].data = wind;
+            mainChart.data.datasets[2].data = hydro;
+            mainChart.data.datasets[3].data = demand;
+            mainChart.update();
+
+            // Hydro chart
+            hydroChart.data.labels = labels;
+            hydroChart.data.datasets[0].data = hydro;
+            hydroChart.data.datasets[1].data = conserved;
+            hydroChart.update();
+
+            // Price chart
+            priceChart.data.labels = labels;
+            priceChart.data.datasets[0].data = prices;
+            priceChart.update();
+
+            // KPIs
+            const totalGen = solar.reduce((a,b)=>a+b,0) + wind.reduce((a,b)=>a+b,0);
+            const totalDemand = demand.reduce((a,b)=>a+b,0);
+            const totalHydro = hydro.reduce((a,b)=>a+b,0);
+            const avgPrice = (prices.reduce((a,b)=>a+b,0)/prices.length).toFixed(2);
+            const renew = Math.round((totalGen / totalDemand) * 100);
+
+            document.getElementById('kpi-gen').innerText    = (totalGen / 1000).toFixed(1) + ' GW';
+            document.getElementById('kpi-demand').innerText = (totalDemand / 1000).toFixed(1) + ' GW';
+            document.getElementById('kpi-hydro').innerText  = (totalHydro / 1000).toFixed(1) + ' GW';
+            document.getElementById('kpi-price').innerText  = '₹' + avgPrice;
+            document.getElementById('kpi-renewable').innerText = renew + '%';
+
+            document.getElementById('kpi-gen-sub').innerText    = 'Solar + Wind';
+            document.getElementById('kpi-demand-sub').innerText = 'Across ' + points + ' periods';
+            document.getElementById('kpi-hydro-sub').innerText  = 'Used as last resort';
+            document.getElementById('kpi-renew-sub').innerText  = renew + '% renewable intake';
+
+            // Source mix
+            const totalSolar = solar.reduce((a,b)=>a+b,0);
+            const totalWind  = wind.reduce((a,b)=>a+b,0);
+            mixChart.data.datasets[0].data = [totalSolar, totalWind, totalHydro];
+            mixChart.update();
+        }
+
+        // Initialize default
+        function initDefaultDates() {
+            const now = new Date();
+            const weekAgo = new Date(); weekAgo.setDate(now.getDate() - 7);
+            document.getElementById('date-to').value   = now.toISOString().split('T')[0];
+            document.getElementById('date-from').value = weekAgo.toISOString().split('T')[0];
+        }
+
+        initDefaultDates();
+        applyPreset('1W');
+    </script>
+</body>
+</html>

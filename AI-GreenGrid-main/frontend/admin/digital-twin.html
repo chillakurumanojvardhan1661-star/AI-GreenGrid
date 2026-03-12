@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Digital Twin | AI GreenGrid</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; background: rgba(5, 6, 10, 0.95); border-right: 1px solid var(--glass-border); padding: 30px; display: flex; flex-direction: column; z-index: 100; }
+        #canvas-container { flex: 1; background: #000; position: relative; }
+        .overlay-ui { position: absolute; top: 30px; left: 300px; z-index: 10; width: 350px; }
+        .asset-list { margin-top: 20px; max-height: 400px; overflow-y: auto; }
+        .asset-item { padding: 10px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="../index.html" class="logo">AI GREENGRID</a>
+        <nav style="display: flex; flex-direction: column;">
+            <a href="dashboard.html" class="side-link"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="heatmap.html" class="side-link"><i class="fas fa-map-marked-alt"></i> Demand Heatmap</a>
+            <a href="#" class="side-link active"><i class="fas fa-cube"></i> Digital Twin</a>
+            <div style="margin-top: auto;">
+                <a href="#" class="side-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </nav>
+    </div>
+
+    <div id="canvas-container">
+        <div class="overlay-ui glass">
+            <h2>Virtual Asset Explorer</h2>
+            <p style="color: var(--text-secondary); font-size: 0.8rem;">3D Model of Regional Grid Infrastructure</p>
+            
+            <div class="asset-list" id="asset-display">
+                <!-- Assets will be listed here -->
+                <div style="padding: 20px; text-align: center; color: var(--text-secondary);">Connecting to Grid...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/socket-client.js"></script>
+    <script>
+        checkAuth('admin');
+
+        // Three.js Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        // Ground Grid
+        const gridHelper = new THREE.GridHelper(100, 50, 0x00f2ff, 0x05060a);
+        scene.add(gridHelper);
+
+        camera.position.set(20, 20, 20);
+        camera.lookAt(0, 0, 0);
+
+        // Assets Group
+        const assetsGroup = new THREE.Group();
+        scene.add(assetsGroup);
+
+        function createAsset(type, x, z) {
+            let geometry, material;
+            if (type === 'Solar') {
+                geometry = new THREE.PlaneGeometry(2, 2);
+                material = new THREE.MeshBasicMaterial({ color: 0x00f2ff, side: THREE.DoubleSide });
+            } else if (type === 'Wind') {
+                geometry = new THREE.CylinderGeometry(0.1, 0.1, 5);
+                material = new THREE.MeshBasicMaterial({ color: 0x7000ff });
+            } else {
+                geometry = new THREE.BoxGeometry(2, 4, 2);
+                material = new THREE.MeshBasicMaterial({ color: 0x0066ff });
+            }
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, mesh.geometry.parameters.height / 2 || 0, z);
+            if (type === 'Solar') mesh.rotation.x = Math.PI / 2;
+            assetsGroup.add(mesh);
+        }
+
+        // Mock Placement for visualization
+        const mockPositions = [
+            { x: -10, z: -10 }, { x: 10, z: -15 }, { x: 5, z: 10 }, { x: -15, z: 5 }, { x: 0, z: 0 }
+        ];
+
+        async function initAssets() {
+            try {
+                // In a real app we'd fetch from /api/grid/sources
+                // For this prototype, we'll simulate based on known backend types
+                const types = ['Solar', 'Solar', 'Wind', 'Wind', 'Hydro'];
+                types.forEach((type, i) => {
+                    createAsset(type, mockPositions[i].x, mockPositions[i].z);
+                });
+                
+                updateAssetList();
+            } catch (e) { console.error(e); }
+        }
+
+        function updateAssetList() {
+            const display = document.getElementById('asset-display');
+            const data = window.liveGridData;
+            if (!data) return;
+
+            display.innerHTML = `
+                <div class="asset-item"><strong>Source</strong> <strong>Output</strong></div>
+                <div class="asset-item"><span>Solar Array Alpha</span> <span>${data.generation.solar} GW</span></div>
+                <div class="asset-item"><span>Wind Farm Beta</span> <span>${data.generation.wind} GW</span></div>
+                <div class="asset-item"><span>Hydro Plant Gamma</span> <span>${data.generation.hydro} GW</span></div>
+                <div class="asset-item" style="margin-top: 10px; border-top: 1px solid var(--accent-cyan); color: var(--accent-cyan);">
+                    <strong>Battery Storage</strong> <span>${data.storage.percentage}%</span>
+                </div>
+            `;
+        }
+
+        window.addEventListener('liveGridUpdate', updateAssetList);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            assetsGroup.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+
+        initAssets();
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
+</body>
+</html>

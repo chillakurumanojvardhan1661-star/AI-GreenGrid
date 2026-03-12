@@ -1,0 +1,12 @@
+node_modules/
+*.log
+.DS_Store
+AI-GreenGrid/
+ml-service.zip
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+brain/
+/tmp/

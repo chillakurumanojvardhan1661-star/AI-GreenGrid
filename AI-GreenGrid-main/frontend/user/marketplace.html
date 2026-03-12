@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace | AI GreenGrid</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .container { padding: 40px 10%; margin-top: 80px; }
+        .market-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+        
+        .market-stats { display: flex; gap: 20px; }
+        .m-stat { padding: 20px; width: 180px; text-align: center; }
+        .m-stat .val { font-size: 1.5rem; font-weight: 700; color: var(--accent-cyan); }
+        .m-stat .lbl { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; }
+
+        .listings { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .listing-card { padding: 25px; transition: transform 0.3s; }
+        .listing-card:hover { transform: translateY(-5px); }
+        
+        .listing-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .user-tag { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+        .price-tag { color: #00ff7f; font-weight: 700; font-size: 1.2rem; }
+
+        .listing-body { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; }
+        .listing-footer { display: flex; justify-content: space-between; align-items: center; }
+    
+        .my-orders-section { display: none; margin-bottom: 40px; }
+        .order-card { padding: 15px 20px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .order-status { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+        .status-completed { background: rgba(0,255,127,0.1); color: #00ff7f; }
+        .status-pending { background: rgba(255,204,0,0.1); color: #ffcc00; }
+</style>
+</head>
+<body>
+    <nav>
+        <a href="../index.html" class="logo">AI GREENGRID</a>
+        <div class="nav-links">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="#" class="active">Marketplace</a>
+            <a href="../analytics.html">Full Analytics</a>
+            <a href="../billing.html">Billing</a>
+            <a href="#" onclick="logout()" class="btn-secondary" style="padding: 8px 20px;">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="market-header">
+            <div>
+                <h1 class="glow-text">Energy Credit Marketplace</h1>
+                <p style="color: var(--text-secondary);">Buy or sell energy credits with fellow green citizens.</p>
+            </div>
+            <div class="market-stats">
+                <div class="m-stat glass">
+                    <div class="lbl">Market Price</div>
+                    <div class="val">₹5.20<span style="font-size: 0.8rem; font-weight: 400;">/cr</span></div>
+                </div>
+                <div class="m-stat glass">
+                    <div class="lbl">Your Balance</div>
+                    <div class="val">1,250</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 30px; display: flex; gap: 15px;">
+            <button class="btn-primary">Create Listing</button>
+            <button class="btn-secondary" onclick="toggleOrders()">My Orders</button>
+        </div>
+        <div class="my-orders-section" id="my-orders-container">
+            <h3 style="margin-bottom: 15px; font-size: 1rem;">My Recent Orders</h3>
+            <div class="order-card">
+                <div>
+                    <div style="font-weight: 700;">Buy 200 Credits</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">From Mike R. · Mar 10, 2026</div>
+                </div>
+                <div>
+                    <span style="font-weight: 700; margin-right: 15px;">₹960</span>
+                    <span class="order-status status-completed">Completed</span>
+                </div>
+            </div>
+            <div class="order-card">
+                <div>
+                    <div style="font-weight: 700;">Sell 500 Credits</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">To Automated Grid · Mar 08, 2026</div>
+                </div>
+                <div>
+                    <span style="font-weight: 700; margin-right: 15px;">₹2,500</span>
+                    <span class="order-status status-completed">Completed</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="listings">
+            <!-- Listing 1 -->
+            <div class="listing-card glass">
+                <div class="listing-header">
+                    <div class="user-tag"><i class="fas fa-user-circle"></i> Sarah J.</div>
+                    <div class="price-tag">₹2,600</div>
+                </div>
+                <div class="listing-body">
+                    <p>Selling 500 Credits (₹2,600) (₹2,600)</p>
+                    <p style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 5px;">Rate: ₹5.20 / credit</p>
+                </div>
+                <div class="listing-footer">
+                    <button class="btn-primary" style="padding: 8px 20px; font-size: 0.8rem;">Buy Now</button>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">2 mins ago</span>
+                </div>
+            </div>
+
+            <!-- Listing 2 -->
+            <div class="listing-card glass">
+                <div class="listing-header">
+                    <div class="user-tag"><i class="fas fa-user-circle"></i> Mike R.</div>
+                    <div class="price-tag">₹2,600</div>
+                </div>
+                <div class="listing-body">
+                    <p>Selling 200 Credits (₹960) (₹960)</p>
+                    <p style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 5px;">Rate: ₹4.80 / credit</p>
+                </div>
+                <div class="listing-footer">
+                    <button class="btn-primary" style="padding: 8px 20px; font-size: 0.8rem;">Buy Now</button>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">10 mins ago</span>
+                </div>
+            </div>
+
+            <!-- Listing 3 -->
+            <div class="listing-card glass">
+                <div class="listing-header">
+                    <div class="user-tag"><i class="fas fa-user-circle"></i> GreenHome Co.</div>
+                    <div class="price-tag">₹2,600</div>
+                </div>
+                <div class="listing-body">
+                    <p>Selling 1,000 Credits (₹6,100) (₹6,100)</p>
+                    <p style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 5px;">Rate: ₹5.205 / credit</p>
+                </div>
+                <div class="listing-footer">
+                    <button class="btn-primary" style="padding: 8px 20px; font-size: 0.8rem;">Buy Now</button>
+                    <span style="font-size: 0.7rem; color: var(--text-secondary);">1 hour ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js">
+        function toggleOrders() {
+            const container = document.getElementById('my-orders-container');
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+        }
+</script>
+    <script src="../js/main.js">
+        function toggleOrders() {
+            const container = document.getElementById('my-orders-container');
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+        }
+</script>
+    <script>
+        checkAuth('user');
+    
+        function toggleOrders() {
+            const container = document.getElementById('my-orders-container');
+            const isVisible = container.style.display === 'block';
+            container.style.display = isVisible ? 'none' : 'block';
+        }
+</script>
+</body>
+</html>

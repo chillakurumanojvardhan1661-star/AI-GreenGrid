@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | AI GreenGrid</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .login-container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #0a0b1e 0%, #05060a 100%);
+        }
+        .login-box { width: 400px; padding: 50px; text-align: center; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; outline: none; transition: border-color 0.3s; }
+        .input-group input:focus { border-color: var(--accent-cyan); }
+        #error-msg { color: #ff4d4d; font-size: 0.8rem; margin-top: 15px; display: none; }
+        #success-msg { color: #00ff7f; font-size: 0.8rem; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box glass">
+            <a href="index.html" class="logo" style="margin-bottom: 40px; display: block;">AI GREENGRID</a>
+            <h2>Join GreenGrid</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">Start your sustainable energy journey</p>
+
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="name@example.com">
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+
+            <button class="btn-primary" style="width: 100%;" onclick="handleSignup()">Create Account</button>
+
+            <div id="error-msg"></div>
+            <div id="success-msg">Account created! Redirecting to login...</div>
+            
+            <p style="margin-top: 30px; font-size: 0.8rem;">
+                Already have an account? <a href="login.html" style="color: var(--accent-cyan); text-decoration: none;">Sign In</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        function handleSignup() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('error-msg');
+            const success = document.getElementById('success-msg');
+
+            if (!email || !pass) {
+                error.innerText = 'Please fill in all fields';
+                error.style.display = 'block';
+                return;
+            }
+
+            const result = signup(email, pass);
+            if (result.success) {
+                error.style.display = 'none';
+                success.style.display = 'block';
+                setTimeout(() => window.location.href = 'login.html', 1500);
+            } else {
+                error.innerText = result.message;
+                error.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

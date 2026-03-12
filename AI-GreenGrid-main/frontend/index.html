@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI GreenGrid | Smart Energy Management</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 0 10%;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05) 0%, rgba(5, 6, 10, 1) 70%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+            background: linear-gradient(135deg, #fff 0%, #00f2ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 40px;
+        }
+
+        .hero-bg-anim {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .energy-flow {
+            position: absolute;
+            width: 2px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--accent-cyan));
+            animation: flowDown 3s linear infinite;
+        }
+
+        @keyframes flowDown {
+            0% { transform: translateY(-100vh); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .features {
+            padding: 100px 10%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            padding: 40px;
+            text-align: left;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-cyan);
+        }
+
+        .feature-card i {
+            font-size: 2.5rem;
+            color: var(--accent-cyan);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+
+        .auth-section {
+            padding: 100px 10%;
+            text-align: center;
+            background: rgba(112, 0, 255, 0.03);
+        }
+
+        .portal-choice {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+
+        .portal-card {
+            width: 300px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .portal-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 30px rgba(112, 0, 255, 0.3);
+        }
+
+        footer {
+            padding: 50px 10%;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        /* ── SPLASH SCREEN ── */
+        .splash-screen {
+            position: fixed; inset: 0; background: #05060a; z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+        .splash-screen.hidden { opacity: 0; visibility: hidden; }
+        .splash-logo {
+            font-size: 4rem; font-weight: 900; letter-spacing: 8px;
+            background: linear-gradient(135deg, #fff 0%, #00f2ff 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            animation: splashPulse 2s ease-in-out infinite;
+        }
+        @keyframes splashPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,242,255,0.2)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,242,255,0.5)); }
+        }
+        .splash-loader {
+            margin-top: 30px; width: 200px; height: 2px;
+            background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
+        }
+        .splash-bar {
+            width: 0%; height: 100%; background: var(--accent-cyan);
+            animation: loaderBar 2.5s ease-in-out forwards;
+        }
+        @keyframes loaderBar {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+    </style>
+
+</head>
+<body>
+    <!-- ── SPLASH SCREEN ── -->
+    <div class="splash-screen" id="splash">
+        <div class="splash-logo">AI GREENGRID</div>
+        <div class="splash-loader"><div class="splash-bar"></div></div>
+    </div>
+
+    <nav>
+
+        <a href="#" class="logo">AI GREENGRID</a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#impact">Impact</a>
+            <a href="#portals">Access Portals</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-bg-anim" id="hero-anim"></div>
+        <h1 class="animate-fade-in">Powering the Future <br> with <span class="glow-text">Intelligence</span></h1>
+        <p class="animate-fade-in" style="animation-delay: 0.2s;">
+            AI GreenGrid optimizes renewable energy usage, improves grid efficiency, and empowers citizens to lead the sustainable revolution.
+        </p>
+        <div class="animate-fade-in" style="animation-delay: 0.4s;">
+            <a href="#portals" class="btn-primary">Explore Portals</a>
+            <a href="#features" class="btn-secondary" style="margin-left: 15px;">Learn More</a>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="feature-card glass scroll-reveal">
+            <i class="fas fa-brain"></i>
+            <h3>AI Grid Optimization</h3>
+            <p>Predictive algorithms balancing supply and demand in real-time for zero waste.</p>
+        </div>
+        <div class="feature-card glass scroll-reveal">
+            <i class="fas fa-bolt"></i>
+            <h3>Smart Energy Storage</h3>
+            <p>Intelligent battery management system storing excess solar and wind power.</p>
+        </div>
+        <div class="feature-card glass scroll-reveal">
+            <i class="fas fa-leaf"></i>
+            <h3>Sustainability Tracking</h3>
+            <p>Monitor your carbon footprint and earn credits for green energy usage.</p>
+        </div>
+    </section>
+
+    <section id="portals" class="auth-section">
+        <h2 class="scroll-reveal">Advanced Access Portals</h2>
+        <p class="scroll-reveal">Choose your portal to enter the AI GreenGrid ecosystem.</p>
+        
+        <div class="portal-choice">
+            <div class="portal-card glass scroll-reveal" onclick="location.href='user/dashboard.html'">
+                <i class="fas fa-user-circle" style="font-size: 3rem; color: var(--accent-cyan); margin-bottom: 20px;"></i>
+                <h3>Citizen Portal</h3>
+                <p>Manage household energy, track usage, and trade energy credits.</p>
+                <div class="btn-primary" style="margin-top: 20px; width: 100%;">Enter Portal</div>
+            </div>
+            <div class="portal-card glass scroll-reveal" onclick="location.href='admin/dashboard.html'">
+                <i class="fas fa-microchip" style="font-size: 3rem; color: var(--accent-purple); margin-bottom: 20px;"></i>
+                <h3>Department Portal</h3>
+                <p>Grid-scale analytics, real-time control, and predictive maintenance.</p>
+                <div class="btn-secondary" style="margin-top: 20px; width: 100%;">Admin Access</div>
+            </div>
+        </div>
+
+    </section>
+
+    <footer>
+        <p>&copy; 2026 AI GreenGrid. All rights reserved. Towards a cleaner, smarter planet.</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Splash Screen Logic
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash');
+                splash.classList.add('hidden');
+            }, 3000); // 3 seconds splash
+        });
+
+        // Hero Background Animation (Simulated flow)
+
+        const animContainer = document.getElementById('hero-anim');
+        for(let i=0; i<30; i++) {
+            const flow = document.createElement('div');
+            flow.className = 'energy-flow';
+            flow.style.left = Math.random() * 100 + '%';
+            flow.style.animationDelay = Math.random() * 3 + 's';
+            flow.style.opacity = Math.random();
+            animContainer.appendChild(flow);
+        }
+    </script>
+</body>
+</html>

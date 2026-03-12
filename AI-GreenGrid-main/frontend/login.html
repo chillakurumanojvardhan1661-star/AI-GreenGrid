@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AI GreenGrid</title>
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .login-container { height: 100vh; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle at center, #0a0b1e 0%, #05060a 100%); }
+        .login-box { width: 400px; padding: 50px; text-align: center; }
+        .login-box h2 { font-size: 2rem; margin-bottom: 10px; color: white; }
+        .login-box p { color: var(--text-secondary); margin-bottom: 30px; font-size: 0.9rem; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-family: var(--font-main); outline: none; transition: border-color 0.3s; }
+        .input-group input:focus { border-color: var(--accent-cyan); background: rgba(255, 255, 255, 0.08); }
+        #error-msg { color: #ff4d4d; font-size: 0.8rem; margin-top: 15px; display: none; }
+        .btn-loading { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box glass">
+            <a href="index.html" class="logo" style="margin-bottom: 40px; display: block;">AI GREENGRID</a>
+            <h2 id="login-title">Sign In</h2>
+            <p id="login-subtitle">Access your energy command center</p>
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="name@example.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            <button class="btn-primary" id="login-btn" style="width: 100%;" onclick="handleLogin()">Continue</button>
+            <div id="error-msg"></div>
+
+            <p style="margin-top: 30px; font-size: 0.8rem;">
+                New to GreenGrid? <a href="signup.html" style="color: var(--accent-cyan); text-decoration: none;">Create an account</a>
+            </p>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const gate = urlParams.get('gate');
+
+        if (gate === 'department') {
+            document.getElementById('login-title').innerText = 'Admin Portal Access';
+            document.getElementById('login-subtitle').innerText = 'Authorized energy personnel only';
+        } else if (gate === 'citizen') {
+            document.getElementById('login-title').innerText = 'Citizen Portal';
+            document.getElementById('login-subtitle').innerText = 'Manage your personal energy dashboard';
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('error-msg');
+            const btn = document.getElementById('login-btn');
+
+            if (!email || !pass) {
+                error.innerText = 'Please enter your email and password.';
+                error.style.display = 'block';
+                return;
+            }
+
+            btn.classList.add('btn-loading');
+            btn.innerText = 'Signing in...';
+
+            const result = await login(email, pass, gate);
+
+            btn.classList.remove('btn-loading');
+            btn.innerText = 'Continue';
+
+            if (result.success) {
+                window.location.href = result.redirect;
+            } else {
+                error.innerText = result.message || 'Login failed. Check your credentials.';
+                error.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    </script>
+</body>
+</html>

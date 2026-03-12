@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Center | AI GreenGrid</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #05060a; min-height: 100vh; overflow-x: hidden; }
+
+        /* ── TOP NAV BAR ── */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+            height: 62px; display: flex; align-items: center;
+            padding: 0 24px; gap: 16px;
+            background: rgba(5,6,10,0.95);
+            border-bottom: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+        }
+        .hamburger-btn {
+            width: 40px; height: 40px; border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: var(--accent-cyan); font-size: 1.1rem;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s; flex-shrink: 0;
+        }
+        .hamburger-btn:hover { background: rgba(0,242,255,0.12); }
+        .nav-logo { font-size: 1rem; font-weight: 800; color: var(--accent-cyan); letter-spacing: 2px; text-decoration: none; }
+        .nav-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+        .nav-badge { padding: 6px 14px; border-radius: 8px; font-size: 0.72rem; background: rgba(0,242,255,0.1); border: 1px solid rgba(0,242,255,0.25); color: var(--accent-cyan); }
+        .nav-user { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); }
+        .nav-user .nu-name { font-size: 0.82rem; font-weight: 600; }
+        .nav-user .nu-role { font-size: 0.65rem; color: var(--accent-cyan); }
+
+        /* ── SLIDE-IN SIDEBAR ── */
+        .sidebar-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px); z-index: 300;
+        }
+        .sidebar-overlay.open { display: block; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            background: rgba(5,6,10,0.98); border-right: 1px solid var(--glass-border);
+            z-index: 400; padding: 0; display: flex; flex-direction: column;
+            transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .sidebar.open { left: 0; }
+
+        .sidebar-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px; border-bottom: 1px solid var(--glass-border);
+        }
+        .sidebar-header .sh-logo { font-size: 1rem; font-weight: 800; color: var(--accent-cyan); letter-spacing: 2px; }
+        .sidebar-close {
+            width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05); color: var(--text-secondary); font-size: 1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .sidebar-close:hover { background: rgba(255,77,77,0.15); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
+
+        .sidebar-user {
+            padding: 20px 24px; border-bottom: 1px solid var(--glass-border);
+            display: flex; align-items: center; gap: 14px;
+        }
+        .sidebar-user .su-avatar {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #7000ff, #00f2ff);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: white; font-weight: 800;
+        }
+        .sidebar-user .su-name { font-size: 0.9rem; font-weight: 700; color: white; }
+        .sidebar-user .su-role { font-size: 0.7rem; color: var(--accent-cyan); margin-top: 2px; }
+
+        .nav-section { padding: 18px 16px 8px; }
+        .nav-section-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary); padding: 0 8px; margin-bottom: 8px; }
+        .side-link {
+            padding: 12px 16px; color: var(--text-secondary); text-decoration: none;
+            border-radius: 10px; margin-bottom: 4px; display: flex; align-items: center;
+            gap: 14px; transition: all 0.2s; font-size: 0.88rem;
+        }
+        .side-link i { width: 20px; text-align: center; font-size: 0.95rem; }
+        .side-link:hover { background: rgba(0,242,255,0.08); color: var(--accent-cyan); }
+        .side-link.active { background: rgba(0,242,255,0.12); color: var(--accent-cyan); font-weight: 600; }
+        .side-link.active i { color: var(--accent-cyan); }
+        .side-link.danger:hover { background: rgba(255,77,77,0.1); color: #ff4d4d; }
+
+        .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--glass-border); }
+        .sidebar-version { font-size: 0.65rem; color: var(--text-secondary); text-align: center; padding: 8px; }
+
+        /* ── MAIN CONTENT ── */
+        .main-content { padding: 82px 5% 40px; max-width: 1280px; margin: 0 auto; }
+
+        /* ── STATS ── */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { padding: 22px 24px; }
+        .stat-card .label { color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .stat-card .value { font-size: 1.85rem; font-weight: 800; color: white; }
+        .stat-card .sub { font-size: 0.75rem; margin-top: 5px; }
+        .sub.up { color: #00ff7f; } .sub.down { color: #ff4d4d; } .sub.info { color: var(--accent-cyan); }
+
+        /* Demand Row */
+        .demand-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+        /* Hydro Calc */
+        .hydro-calc { padding: 24px; margin-bottom: 24px; border-left: 4px solid #0066ff; background: rgba(0,102,255,0.04); }
+        .hydro-calc h3 { font-size: 1rem; margin-bottom: 5px; color: white; display: flex; align-items: center; gap: 10px; }
+        .hydro-calc .hydro-target { font-size: 0.83rem; color: var(--text-secondary); margin-bottom: 18px; }
+        .hydro-calc .hydro-target span { color: #0099ff; font-weight: 700; }
+        .calc-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; flex-wrap: wrap; }
+        .inp-group label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 5px; }
+        .inp-group input { width: 100%; padding: 10px 13px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-family: var(--font-main); font-size: 0.88rem; outline: none; transition: border-color 0.3s; }
+        .inp-group input:focus { border-color: #0099ff; }
+        .calc-btn { padding: 10px 20px; background: linear-gradient(135deg,#0066ff,#0099ff); border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 0.82rem; cursor: pointer; white-space: nowrap; font-family: var(--font-main); }
+        .hydro-result { margin-top: 16px; padding: 14px 20px; background: rgba(0,153,255,0.1); border-radius: 10px; border: 1px solid rgba(0,153,255,0.25); display: none; }
+        .hydro-result .result-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: #0099ff; margin-bottom: 5px; }
+        .hydro-result .result-value { font-size: 1.9rem; font-weight: 800; color: white; }
+        .hydro-result .result-unit { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+        /* Charts */
+        .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .chart-container { padding: 24px; margin-bottom: 20px; }
+        .chart-container h3 { margin-bottom: 18px; font-size: 1rem; }
+        .alert-box { padding: 18px; border-left: 4px solid var(--accent-purple); margin-bottom: 12px; background: rgba(112,0,255,0.05); border-radius: 0 8px 8px 0; }
+        .alert-box.warning { border-left-color: #ff8a00; background: rgba(255,138,0,0.05); }
+        .alert-box.danger { border-left-color: #ff4d4d; background: rgba(255,77,77,0.05); }
+
+        /* ── MANUAL CONTROLS ── */
+        .control-panel { 
+            padding: 24px; margin-bottom: 24px; 
+            background: linear-gradient(135deg, rgba(112,0,255,0.08), rgba(0,242,255,0.05));
+            border: 1px solid rgba(0,242,255,0.2); 
+        }
+        .control-panel h3 { font-size: 1rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .control-group { background: rgba(0,0,0,0.2); padding: 16px; border-radius: 12px; border: 1px solid var(--glass-border); }
+        .control-group label { display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .control-group input[type="range"] { 
+            width: 100%; height: 6px; border-radius: 5px; background: rgba(255,255,255,0.1); outline: none; -webkit-appearance: none; appearance: none;
+        }
+
+        .control-group input[type="number"], .control-group input[type="text"] {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 6px; padding: 6px 10px; color: white; font-size: 0.8rem; margin-top: 4px;
+        }
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-cyan); cursor: pointer; border: 3px solid #05060a;
+        }
+        .control-val { float: right; color: var(--accent-cyan); font-weight: 700; font-family: monospace; }
+        .reset-btn { font-size: 0.65rem; color: #ff4d4d; cursor: pointer; background: none; border: none; margin-top: 8px; padding: 0; }
+        .reset-btn:hover { text-decoration: underline; }
+
+        @media(max-width: 700px) {
+            .calc-inputs { grid-template-columns: 1fr 1fr; }
+            .demand-row { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── TOP NAV ── -->
+    <div class="top-nav">
+        <button class="hamburger-btn" id="menu-btn" onclick="openSidebar()" title="Open Menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="../index.html" class="nav-logo">AI GREENGRID</a>
+        <div class="nav-right">
+            <div class="nav-badge"><i class="fas fa-circle" style="color:#00ff7f;font-size:0.5rem;margin-right:5px;"></i> Grid Online</div>
+            <div class="nav-user">
+                <div>
+                    <div class="nu-name">System Admin</div>
+                    <div class="nu-role">ACTIVE UNIT: GRID-7</div>
+                </div>
+                <i class="fas fa-user-shield" style="color:var(--accent-cyan);font-size:1.1rem;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SIDEBAR OVERLAY ── -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- ── SLIDE-IN SIDEBAR ── -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sh-logo">⚡ MENU</span>
+            <button class="sidebar-close" onclick="closeSidebar()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="su-avatar">A</div>
+            <div>
+                <div class="su-name">System Admin</div>
+                <div class="su-role">Department Authority · GRID-7</div>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-label">Grid Management</div>
+            <a href="#" class="side-link active" onclick="closeSidebar()"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="heatmap.html" class="side-link" onclick="closeSidebar()"><i class="fas fa-map-marked-alt"></i> Demand Heatmap</a>
+            <a href="digital-twin.html" class="side-link" onclick="closeSidebar()"><i class="fas fa-cube"></i> Digital Twin</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-label">Reports & Finance</div>
+            <a href="../analytics.html" class="side-link" onclick="closeSidebar()"><i class="fas fa-chart-line"></i> Analytics</a>
+            <a href="../billing.html" class="side-link" onclick="closeSidebar()"><i class="fas fa-file-invoice-dollar"></i> Billing</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-label">System</div>
+            <a href="#" class="side-link" onclick="closeSidebar()"><i class="fas fa-cog"></i> Settings</a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-version">AI GreenGrid · v2.0 · ML-Powered</div>
+        </div>
+    </div>
+
+    <!-- ── MAIN CONTENT ── -->
+    <div class="main-content">
+        <header style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end;">
+            <div>
+                <h1 class="glow-text">Smart Grid Command</h1>
+                <p style="color:var(--text-secondary);">Real-time AI monitoring &amp; grid management</p>
+                <a href="../analytics.html" class="btn-secondary" style="display:inline-block; margin-top:10px; padding:6px 15px; font-size:0.75rem; border-color:var(--accent-purple); color:var(--accent-purple);"><i class="fas fa-chart-line"></i> View Grid Analytics</a>
+            </div>
+
+            
+            <div class="glass" style="padding:15px; display:flex; gap:20px; border:1px solid rgba(0,242,255,0.1);">
+                <div class="inp-group">
+                    <label style="font-size:0.6rem;">Operating Area</label>
+                    <input type="text" id="ctrl-area" value="Hyderabad" style="width:120px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--glass-border); border-radius:6px; padding:5px 10px; font-size:0.8rem;" onchange="updateOverride('area', this.value)">
+                </div>
+                <div class="inp-group">
+                    <label style="font-size:0.6rem;">Solar Cap (kW)</label>
+                    <input type="number" id="ctrl-solar-cap" value="500" style="width:80px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--glass-border); border-radius:6px; padding:5px 10px; font-size:0.8rem;" onchange="updateOverride('solar_capacity', this.value)">
+                </div>
+                <div class="inp-group">
+                    <label style="font-size:0.6rem;">Wind Cap (kW)</label>
+                    <input type="number" id="ctrl-wind-cap" value="400" style="width:80px; background:rgba(255,255,255,0.05); color:white; border:1px solid var(--glass-border); border-radius:6px; padding:5px 10px; font-size:0.8rem;" onchange="updateOverride('wind_capacity', this.value)">
+                </div>
+            </div>
+        </header>
+ Riverside
+
+        <!-- Solar + Wind + Price -->
+        <div class="stats-grid">
+            <div class="stat-card glass">
+                <div class="label"><i class="fas fa-sun" style="color:#ffcc00;"></i> Solar Generated</div>
+                <div class="value" id="live-solar">— <small style="font-size:1rem;">MW</small></div>
+                <div class="sub up"><i class="fas fa-arrow-up"></i> AI Live Tracking</div>
+            </div>
+            <div class="stat-card glass">
+                <div class="label"><i class="fas fa-wind" style="color:#00c8ff;"></i> Wind Generated</div>
+                <div class="value" id="live-wind">— <small style="font-size:1rem;">MW</small></div>
+                <div class="sub up"><i class="fas fa-arrow-up"></i> AI Live Tracking</div>
+            </div>
+            <div class="stat-card glass">
+                <div class="label"><i class="fas fa-bolt" style="color:#ff8a00;"></i> Energy Price</div>
+                <div class="value" id="live-pricing">—</div>
+                <div class="sub info"><i class="fas fa-chart-line"></i> Market Adaptive</div>
+            </div>
+        </div>
+
+        <!-- Current + Expected Demand -->
+        <div class="demand-row">
+            <div class="stat-card glass">
+                <div class="label"><i class="fas fa-bolt" style="color:#ff4d4d;"></i> Current Demand</div>
+                <div class="value" id="live-demand">— <small style="font-size:1rem;">MW</small></div>
+                <div class="sub down"><i class="fas fa-satellite-dish"></i> Real-time Grid Load</div>
+            </div>
+            <div class="stat-card glass">
+                <div class="label"><i class="fas fa-brain" style="color:#a855f7;"></i> Expected Demand</div>
+                <div class="value" id="live-expected-demand">— <small style="font-size:1rem;">MW</small></div>
+                <div class="sub info"><i class="fas fa-robot"></i> AI Model Forecast</div>
+            </div>
+        </div>
+
+        <!-- Hydro Calculator -->
+        <div class="hydro-calc glass">
+            <h3><i class="fas fa-water" style="color:#0099ff;"></i> Hydro Power Calculator</h3>
+            <div class="hydro-target">Power to be generated by Hydro: <span id="live-hydro-target">Calculating...</span></div>
+            <div class="calc-inputs">
+                <div class="inp-group">
+                    <label>Height (h) · m</label>
+                    <input type="number" id="hydro-h" placeholder="e.g. 50" min="1" step="0.1">
+                </div>
+                <div class="inp-group">
+                    <label>Efficiency (η) · %</label>
+                    <input type="number" id="hydro-n" placeholder="e.g. 85" min="1" max="100">
+                </div>
+                <div class="inp-group">
+                    <label>Generator Voltage (Q) · kV</label>
+                    <input type="number" id="hydro-q" placeholder="e.g. 11" min="0.1" step="0.1">
+                </div>
+                <button class="calc-btn" onclick="calculateHydro()"><i class="fas fa-calculator"></i> Calculate</button>
+            </div>
+            <div class="hydro-result glass" id="hydro-result">
+                <div class="result-label">Water Required</div>
+                <div class="result-value" id="hydro-result-value">—</div>
+                <div class="result-unit">cubic centimetres (cm³) · per second</div>
+            </div>
+        </div>
+
+
+        <!-- Charts -->
+        <div class="dashboard-grid">
+            <div>
+                <div class="chart-container glass">
+                    <h3>Energy Flow (Real-time)</h3>
+                    <canvas id="liveFlowChart"></canvas>
+                </div>
+                <div class="chart-container glass">
+                    <h3>Renewable Source Mix</h3>
+                    <canvas id="mixChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <div class="chart-container glass">
+                    <h3>Grid Alerts</h3>
+                    <div id="grid-alerts">
+                        <div class="alert-box">
+                            <h5>System Operational</h5>
+                            <p style="font-size:0.82rem;margin-top:4px;color:var(--text-secondary);">All units functional. Optimizing renewable intake.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/socket-client.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        checkAuth('admin');
+
+        // ── Sidebar toggle ──
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        // Close on Escape key
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+        // ── Hydro Calculator ──
+        let currentHydroTarget = 0;
+        function calculateHydro() {
+            const h = parseFloat(document.getElementById('hydro-h').value);
+            const n = parseFloat(document.getElementById('hydro-n').value) / 100;
+            const q = parseFloat(document.getElementById('hydro-q').value);
+            if (!h || !n || !q) { alert('Please fill in all three inputs.'); return; }
+            const g = 9.8;
+            const P_watts = currentHydroTarget * 1e6;
+            const Q_m3s = P_watts / (n * g * h * q);
+            const Q_cm3s = Q_m3s * 1_000_000;
+            document.getElementById('hydro-result-value').innerText = Q_cm3s.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+            document.getElementById('hydro-result').style.display = 'block';
+        }
+
+        // ── Charts ──
+        const ctxFlow = document.getElementById('liveFlowChart').getContext('2d');
+        const flowChart = new Chart(ctxFlow, {
+            type: 'line',
+            data: { labels: [], datasets: [
+                { label: 'Solar (MW)',  data: [], borderColor: '#ffcc00', backgroundColor: 'rgba(255,204,0,0.06)', tension: 0.4, fill: true },
+                { label: 'Wind (MW)',   data: [], borderColor: '#00c8ff', backgroundColor: 'rgba(0,200,255,0.06)', tension: 0.4, fill: true },
+                { label: 'Hydro (MW)', data: [], borderColor: '#0066ff', backgroundColor: 'rgba(0,102,255,0.06)', tension: 0.4, fill: true }
+            ]},
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#fff' } } },
+                scales: {
+                    x: { ticks: { color: '#a0a0c0' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    y: { ticks: { color: '#a0a0c0' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+
+        const ctxMix = document.getElementById('mixChart').getContext('2d');
+        const mixChart = new Chart(ctxMix, {
+            type: 'doughnut',
+            data: { labels: ['Solar', 'Wind', 'Hydro'], datasets: [{ data: [30,30,40], backgroundColor: ['#ffcc00','#00c8ff','#0066ff'], borderWidth: 0 }] },
+            options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+        });
+
+        // ── Live Data ──
+        window.addEventListener('liveGridUpdate', (e) => {
+            const data = e.detail;
+            document.getElementById('live-solar').innerHTML   = data.generation.solar + ' <small style="font-size:1rem;">MW</small>';
+            document.getElementById('live-wind').innerHTML    = data.generation.wind  + ' <small style="font-size:1rem;">MW</small>';
+            document.getElementById('live-demand').innerHTML  = data.demand + ' <small style="font-size:1rem;">MW</small>';
+            document.getElementById('live-pricing').innerHTML = '₹' + (parseFloat(data.pricing) * 83).toFixed(2) + '<small style="font-size:0.9rem;">/kWh</small>';
+            const exp = Math.floor(data.demand * (0.95 + Math.random() * 0.1));
+            document.getElementById('live-expected-demand').innerHTML = exp + ' <small style="font-size:1rem;">MW</small>';
+            const hydroTarget = Math.max(0, data.demand - data.generation.solar - data.generation.wind);
+            currentHydroTarget = hydroTarget / 1000;
+            document.getElementById('live-hydro-target').innerText = hydroTarget + ' MW';
+
+            // Flow chart
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            flowChart.data.labels.push(time);
+            flowChart.data.datasets[0].data.push(data.generation.solar);
+            flowChart.data.datasets[1].data.push(data.generation.wind);
+            flowChart.data.datasets[2].data.push(data.generation.hydro || Math.max(0, data.demand - data.generation.solar - data.generation.wind));
+            if (flowChart.data.labels.length > 10) { flowChart.data.labels.shift(); flowChart.data.datasets[0].data.shift(); flowChart.data.datasets[1].data.shift(); flowChart.data.datasets[2].data.shift(); }
+            flowChart.update();
+            mixChart.data.datasets[0].data = [data.generation.solar, data.generation.wind, data.generation.hydro];
+            mixChart.update();
+
+            // Alerts
+            if (data.gridStatus === 'unstable' || data.networkStatus === 'intrusion') {
+                const alertsEl = document.getElementById('grid-alerts');
+                const div = document.createElement('div');
+                div.className = 'alert-box danger';
+                div.innerHTML = `<h5>${data.gridStatus === 'unstable' ? '⚠️ Grid Instability Detected' : '🔴 Network Intrusion Alert'}</h5><p style="font-size:0.8rem;margin-top:4px;color:var(--text-secondary);">AI detection triggered at ${new Date().toLocaleTimeString()}</p>`;
+                alertsEl.prepend(div);
+                if (alertsEl.children.length > 4) alertsEl.removeChild(alertsEl.lastChild);
+            }
+        });
+
+        // ── Anomaly Tracking ──
+        const ctxAnomaly = document.getElementById('anomalyChart').getContext('2d');
+        const anomalyChart = new Chart(ctxAnomaly, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Expected (MW)', data: [], backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.3)', borderWidth: 1 },
+                    { label: 'Actual (MW)', data: [], backgroundColor: 'rgba(0,242,255,0.5)', borderColor: '#00f2ff', borderWidth: 1 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0c0' } },
+                    x: { grid: { display: false }, ticks: { color: '#a0a0c0' } }
+                },
+                plugins: { legend: { labels: { color: '#fff' } } }
+            }
+        });
+
+        window.addEventListener('anomalyUpdate', (e) => {
+            const data = e.detail;
+            
+            // Update Stats
+            document.getElementById('security-suspicious-count').innerText = data.meters.length;
+            document.getElementById('security-suspicious-sub').innerText = data.meters.length > 0 ? `${data.meters.length} Flags Detected` : 'All clear';
+            
+            document.getElementById('security-grid-loss').innerHTML = `${data.gridLoss.totalGridLoss} <small style="font-size:1rem;">MW</small>`;
+            document.getElementById('security-grid-loss-sub').innerText = `${data.gridLoss.gridLossPercent}% Loss • Status: ${data.gridLoss.status}`;
+            
+            const badge = document.getElementById('security-badge');
+            if (data.gridLoss.gridLossPercent > 10) {
+                badge.style.background = 'rgba(255,77,77,0.1)';
+                badge.style.borderColor = 'rgba(255,77,77,0.2)';
+                badge.style.color = '#ff4d4d';
+                badge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> GRID LOSS DETECTED';
+            } else {
+                badge.style.background = 'rgba(0,255,127,0.1)';
+                badge.style.borderColor = 'rgba(0,255,127,0.2)';
+                badge.style.color = '#00ff7f';
+                badge.innerHTML = '<i class="fas fa-check-circle"></i> SYSTEM SECURE';
+            }
+
+            // Update List
+            const listEl = document.getElementById('security-updates');
+            if (data.meters.length > 0) {
+                listEl.innerHTML = '';
+                data.meters.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = `alert-box ${m.riskScore > 0.6 ? 'danger' : 'warning'}`;
+                    div.style.padding = '12px';
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>Meter: ${m.meterId}</strong>
+                            <span class="nav-badge" style="font-size:0.6rem; padding:2px 8px;">RISK: ${m.riskScore}</span>
+                        </div>
+                        <p style="font-size:0.75rem; margin-top:4px; color:var(--text-secondary);">${m.status} Consumption: ${m.actual.toFixed(2)} MW (Exp: ${m.expected.toFixed(2)})</p>
+                    `;
+                    listEl.appendChild(div);
+                });
+
+                // Update Chart with suspicious meters
+                anomalyChart.data.labels = data.meters.map(m => m.meterId);
+                anomalyChart.data.datasets[0].data = data.meters.map(m => m.expected);
+                anomalyChart.data.datasets[1].data = data.meters.map(m => m.actual);
+                anomalyChart.update();
+            } else {
+                listEl.innerHTML = '<p style="color:var(--text-secondary); text-align: center; margin-top: 40px;">No persistent anomalies detected.</p>';
+            }
+        });
+
+        // ── Manual Control Logic ──
+        async function updateOverride(type, value) {
+            try {
+                const val = (type === 'area') ? value : (value === "" ? null : parseFloat(value));
+                await fetch('/api/grid/override', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, value: val })
+                });
+            } catch (e) { console.error('Override fail:', e); }
+        }
+
+        async function resetOverride(type) {
+            try {
+                await fetch('/api/grid/override', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, value: null })
+                });
+            } catch (e) { console.error('Reset fail:', e); }
+        }
+    </script>
+</body>
+</html>
