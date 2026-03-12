@@ -317,8 +317,9 @@
                         <h3 style="margin-bottom:0;">Energy Flow</h3>
                         <div class="usage-range-tabs" style="margin-bottom:0;">
                             <button class="use-tab active" onclick="setFlowRange('realtime', this)">Real-time</button>
-                            <button class="use-tab" onclick="setFlowRange('week', this)">1 Week</button>
-                            <button class="use-tab" onclick="setFlowRange('month', this)">1 Month</button>
+                            <button class="use-tab" onclick="setFlowRange('today', this)">24 Hours</button>
+                            <button class="use-tab" onclick="setFlowRange('week', this)">7 Days</button>
+                            <button class="use-tab" onclick="setFlowRange('month', this)">30 Days</button>
                         </div>
                     </div>
                     <canvas id="liveFlowChart"></canvas>
@@ -441,7 +442,10 @@
         }
 
         function generateHistoricalFlow(range) {
-            const points = range === 'week' ? 7 : 30;
+            let points = 24;
+            if (range === 'week') points = 7;
+            if (range === 'month') points = 30;
+            
             const labels = [];
             const solar = [];
             const wind = [];
@@ -449,8 +453,13 @@
             
             for (let i = points; i >= 0; i--) {
                 const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(range === 'week' ? date.toLocaleDateString([], {weekday: 'short'}) : date.getDate() + ' ' + date.toLocaleDateString([], {month: 'short'}));
+                if (range === 'today') {
+                    date.setHours(date.getHours() - i);
+                    labels.push(date.getHours() + ':00');
+                } else {
+                    date.setDate(date.getDate() - i);
+                    labels.push(range === 'week' ? date.toLocaleDateString([], {weekday: 'short'}) : date.getDate() + ' ' + date.toLocaleDateString([], {month: 'short'}));
+                }
                 solar.push(400 + Math.random() * 200);
                 wind.push(300 + Math.random() * 200);
                 hydro.push(200 + Math.random() * 100);
