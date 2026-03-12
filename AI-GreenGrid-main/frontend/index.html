@@ -175,6 +175,9 @@
     <nav>
 
         <a href="#" class="logo">AI GREENGRID</a>
+        <a href="analytics.html" class="nav-link">Analytics</a>
+        <a href="login.html" id="nav-login-btn" class="nav-link btn-glow" style="margin-left:20px; border:1px solid var(--accent-cyan); padding:5px 15px; border-radius:20px;">Login</a>
+        <button class="nav-link" id="nav-logout-btn" onclick="logout()" style="display:none; background:none; border:none; cursor:pointer;">Logout</button>
         <div class="nav-links">
             <a href="#features">Features</a>
             <a href="#impact">Impact</a>
@@ -217,12 +220,12 @@
         <p class="scroll-reveal">Choose your portal to enter the AI GreenGrid ecosystem.</p>
         
         <div class="portal-choice">
-            <div class="portal-card glass scroll-reveal" onclick="location.href='user/dashboard.html'">
-                <i class="fas fa-user-circle" style="font-size: 3rem; color: var(--accent-cyan); margin-bottom: 20px;"></i>
-                <h3>Citizen Portal</h3>
-                <p>Manage household energy, track usage, and trade energy credits.</p>
-                <div class="btn-primary" style="margin-top: 20px; width: 100%;">Enter Portal</div>
-            </div>
+                <div class="portal-card glass" onclick="enterPortal('citizen')">
+                    <div class="portal-icon"><i class="fas fa-user-circle"></i></div>
+                    <h3>Citizen Portal</h3>
+                    <p>Track your energy usage, earn rewards, and pay bills.</p>
+                    <span class="portal-link" id="citizen-portal-status">Access Portal <i class="fas fa-arrow-right"></i></span>
+                </div>
             <div class="portal-card glass scroll-reveal" onclick="location.href='admin/dashboard.html'">
                 <i class="fas fa-microchip" style="font-size: 3rem; color: var(--accent-purple); margin-bottom: 20px;"></i>
                 <h3>Department Portal</h3>

@@ -23,4 +23,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }, observerOptions);
 
     document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+
+    // --- AUTH UI SYNC ---
+    const userEmail = localStorage.getItem('userEmail');
+    const loginBtn = document.getElementById('nav-login-btn');
+    const logoutBtn = document.getElementById('nav-logout-btn');
+    const citizenStatus = document.getElementById('citizen-portal-status');
+
+    if (userEmail) {
+        if (loginBtn) loginBtn.style.display = 'none';
+        if (logoutBtn) {
+            logoutBtn.style.display = 'inline-block';
+            logoutBtn.innerHTML = `<i class="fas fa-user-circle"></i> ${userEmail.split('@')[0]} (Logout)`;
+        }
+        if (citizenStatus) citizenStatus.innerHTML = 'Enter Dashboard <i class="fas fa-arrow-right"></i>';
+    }
 });
+
+function enterPortal(type) {
+    const userRole = localStorage.getItem('userRole');
+    if (type === 'citizen') {
+        if (userRole === 'user' || userRole === 'admin') {
+            window.location.href = 'user/dashboard.html';
+        } else {
+            window.location.href = 'login.html';
+        }
+    } else if (type === 'admin') {
+        window.location.href = 'admin/dashboard.html';
+    }
+}

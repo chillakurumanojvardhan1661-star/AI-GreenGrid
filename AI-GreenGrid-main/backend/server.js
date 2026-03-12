@@ -422,15 +422,72 @@ app.post('/api/meters/override', (req, res) => {
 
 app.get('/api/ml/status', (req, res) => res.json({ mlService: ML_API, status: 'connected' }));
 
+app.get('/api/user/profile', async (req, res) => {
+    const email = req.query.email;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+    
+    let user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    // Also fetch billing/usage data
+    let billing = await Billing.findOne({ userId: email });
+    if (!billing) {
+        billing = new Billing({ userId: email, estimatedAmount: 25.50, consumptionSinceLastBill: 150 });
+        await billing.save();
+    }
+    
+    res.json({ user, billing });
+});
+
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     let user = await User.findOne({ email, password }).catch(() => null);
     if (!user && email) {
+        // Simple auto-registration for demo if not exists
         user = new User({ email, password, role: email.includes('admin') ? 'admin' : 'user' });
         await user.save().catch(() => {});
     }
-    res.json(user || { email, role: email.includes('admin') ? 'admin' : 'user' });
+    
+    if (user) {
+        let billing = await Billing.findOne({ userId: email });
+        if (!billing && user.role === 'user') {
+            billing = new Billing({ userId: email, estimatedAmount: 25.50, consumptionSinceLastBill: 150 });
+            await billing.save();
+        }
+        res.json({ user, billing });
+    } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+    }
 });
+
+app.post('/api/auth/signup', async (req, res) => {
+    const { email, password, role } = req.body;
+    try {
+        let user = new User({ email, password, role: role || 'user' });
+        await user.save();
+        res.json({ success: true, user });
+    } catch (e) {
+        res.status(400).json({ error: 'User already exists or invalid data' });
+    }
+});
+
+// Periodic task to update power usage for active users (Simulated)
+async function updatePowerUsage() {
+    try {
+        const users = await User.find({ role: 'user' });
+        for (const user of users) {
+            await Billing.findOneAndUpdate(
+                { userId: user.email },
+                { 
+                    $inc: { consumptionSinceLastBill: Math.random() * 2 },
+                    $set: { lastUpdate: new Date() }
+                },
+                { upsert: true }
+            );
+        }
+    } catch (e) { console.error('[Usage Sync] Error:', e.message); }
+}
+setInterval(updatePowerUsage, 10000); // Update every 10 seconds
 
 const PORT = 3000;
 server.listen(PORT, () => {

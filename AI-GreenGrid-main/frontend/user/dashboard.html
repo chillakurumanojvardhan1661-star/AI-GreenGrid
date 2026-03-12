@@ -334,9 +334,52 @@
         function updateClock() { document.getElementById('live-time').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
         setInterval(updateClock, 1000); updateClock();
 
-        // User name from localStorage
-        const em = localStorage.getItem('userEmail') || '';
-        if (em) document.getElementById('user-name').innerText = em.split('@')[0].charAt(0).toUpperCase() + em.split('@')[0].slice(1);
+        // State
+        let userData = null;
+        let billingData = null;
+
+        async function fetchUserProfile() {
+            const email = localStorage.getItem('userEmail');
+            if (!email) return;
+
+            try {
+                const res = await fetch(`/api/user/profile?email=${email}`);
+                const data = await res.json();
+                if (data.user) {
+                    userData = data.user;
+                    billingData = data.billing;
+                    updatePersonalizedUI();
+                }
+            } catch (e) { console.error('Error fetching profile:', e); }
+        }
+
+        function updatePersonalizedUI() {
+            if (!userData) return;
+
+            // Name
+            const em = userData.email;
+            document.getElementById('user-name').innerText = em.split('@')[0].charAt(0).toUpperCase() + em.split('@')[0].slice(1);
+
+            // Responsibility & Credits
+            document.getElementById('resp-score').innerText = userData.responsibilityScore;
+            document.getElementById('total-credits').innerText = (userData.responsibilityScore * 1.5).toFixed(0);
+
+            // Impact
+            if (userData.impact) {
+                document.getElementById('imp-carbon').innerText = userData.impact.carbonSavedKg.toFixed(1) + ' kg';
+                document.getElementById('imp-water').innerText = userData.impact.waterConservedL.toLocaleString() + ' L';
+            }
+
+            // Usage
+            if (billingData) {
+                const usage = billingData.consumptionSinceLastBill.toFixed(1);
+                document.getElementById('usage-value').innerText = usage;
+                usageConfig.month.value = usage; // Update config for "this month" tab
+            }
+        }
+
+        fetchUserProfile();
+        setInterval(fetchUserProfile, 10000); // Polling for updates
 
         // ── Usage Bar Mini Chart ──
         let usageDetailChart = null;
@@ -427,11 +470,12 @@
 
         // ── Payment ──
         function openPayment() {
-            const units = 412;
+            const units = billingData ? billingData.consumptionSinceLastBill.toFixed(1) : 0;
             const rate = 5.80;
             const gross = (units * rate).toFixed(2);
-            const credits = Math.min(liveCredits * 0.1, 50).toFixed(2);
-            const net = (gross - credits).toFixed(2);
+            const credits = (userData ? userData.responsibilityScore * 0.05 : 0).toFixed(2);
+            const net = Math.max(0, gross - credits).toFixed(2);
+            
             document.getElementById('pay-units').innerText   = units + ' kWh';
             document.getElementById('pay-amount').innerText  = '₹' + gross;
             document.getElementById('pay-credits').innerText = '-₹' + credits;

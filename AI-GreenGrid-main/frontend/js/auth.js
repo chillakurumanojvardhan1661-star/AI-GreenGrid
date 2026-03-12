@@ -58,9 +58,25 @@ function logout() {
 }
 
 function checkAuth(requiredRole) {
-    // Auth requirement removed as per user request.
-    console.log('Bypassing auth check for:', requiredRole);
-    return;
+    const role = localStorage.getItem('userRole');
+    const email = localStorage.getItem('userEmail');
+    
+    // Required authentication only for citizen portal (/user/)
+    const isCitizenPortal = window.location.pathname.includes('/user/');
+    
+    if (isCitizenPortal && (!role || !email)) {
+        console.warn('Unauthorized access to Citizen Portal. Redirecting to login.');
+        const isInsideSubfolder = window.location.pathname.includes('/user/');
+        window.location.href = isInsideSubfolder ? '../login.html' : 'login.html';
+        return;
+    }
+
+    if (requiredRole && role && role !== requiredRole) {
+        console.warn('Role mismatch. Target:', requiredRole, 'Actual:', role);
+        // Not forcing redirect for admin yet as per user request (Admin portal is open)
+    }
+
+    console.log('Auth check passed (or optional) for:', requiredRole);
 }
 
 // Helper to seed initial admin if server is fresh
