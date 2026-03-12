@@ -313,23 +313,19 @@
         <div class="dashboard-grid">
             <div>
                 <div class="chart-container glass">
-                    <h3>Energy Flow (Real-time)</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="margin-bottom:0;">Energy Flow</h3>
+                        <div class="usage-range-tabs" style="margin-bottom:0;">
+                            <button class="use-tab active" onclick="setFlowRange('realtime', this)">Real-time</button>
+                            <button class="use-tab" onclick="setFlowRange('week', this)">1 Week</button>
+                            <button class="use-tab" onclick="setFlowRange('month', this)">1 Month</button>
+                        </div>
+                    </div>
                     <canvas id="liveFlowChart"></canvas>
                 </div>
                 <div class="chart-container glass">
                     <h3>Renewable Source Mix</h3>
                     <canvas id="mixChart"></canvas>
-                </div>
-            </div>
-            <div>
-                <div class="chart-container glass">
-                    <h3>Grid Alerts</h3>
-                    <div id="grid-alerts">
-                        <div class="alert-box">
-                            <h5>System Operational</h5>
-                            <p style="font-size:0.82rem;margin-top:4px;color:var(--text-secondary);">All units functional. Optimizing renewable intake.</p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -410,26 +406,62 @@
             document.getElementById('live-hydro-target').innerText = hydroTarget + ' MW';
 
             // Flow chart
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            flowChart.data.labels.push(time);
-            flowChart.data.datasets[0].data.push(data.generation.solar);
-            flowChart.data.datasets[1].data.push(data.generation.wind);
-            flowChart.data.datasets[2].data.push(data.generation.hydro || Math.max(0, data.demand - data.generation.solar - data.generation.wind));
-            if (flowChart.data.labels.length > 10) { flowChart.data.labels.shift(); flowChart.data.datasets[0].data.shift(); flowChart.data.datasets[1].data.shift(); flowChart.data.datasets[2].data.shift(); }
-            flowChart.update();
+            if (currentFlowRange === 'realtime') {
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                flowChart.data.labels.push(time);
+                flowChart.data.datasets[0].data.push(data.generation.solar);
+                flowChart.data.datasets[1].data.push(data.generation.wind);
+                flowChart.data.datasets[2].data.push(data.generation.hydro || Math.max(0, data.demand - data.generation.solar - data.generation.wind));
+                if (flowChart.data.labels.length > 10) { 
+                    flowChart.data.labels.shift(); 
+                    flowChart.data.datasets[0].data.shift(); 
+                    flowChart.data.datasets[1].data.shift(); 
+                    flowChart.data.datasets[2].data.shift(); 
+                }
+                flowChart.update();
+            }
             mixChart.data.datasets[0].data = [data.generation.solar, data.generation.wind, data.generation.hydro];
             mixChart.update();
-
-            // Alerts
-            if (data.gridStatus === 'unstable' || data.networkStatus === 'intrusion') {
-                const alertsEl = document.getElementById('grid-alerts');
-                const div = document.createElement('div');
-                div.className = 'alert-box danger';
-                div.innerHTML = `<h5>${data.gridStatus === 'unstable' ? '⚠️ Grid Instability Detected' : '🔴 Network Intrusion Alert'}</h5><p style="font-size:0.8rem;margin-top:4px;color:var(--text-secondary);">AI detection triggered at ${new Date().toLocaleTimeString()}</p>`;
-                alertsEl.prepend(div);
-                if (alertsEl.children.length > 4) alertsEl.removeChild(alertsEl.lastChild);
-            }
         });
+
+        // ── Flow Range Control ──
+        let currentFlowRange = 'realtime';
+        function setFlowRange(range, btn) {
+            currentFlowRange = range;
+            document.querySelectorAll('.usage-range-tabs .use-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (range === 'realtime') {
+                flowChart.data.labels = [];
+                flowChart.data.datasets.forEach(ds => ds.data = []);
+                flowChart.update();
+            } else {
+                generateHistoricalFlow(range);
+            }
+        }
+
+        function generateHistoricalFlow(range) {
+            const points = range === 'week' ? 7 : 30;
+            const labels = [];
+            const solar = [];
+            const wind = [];
+            const hydro = [];
+            
+            for (let i = points; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(range === 'week' ? date.toLocaleDateString([], {weekday: 'short'}) : date.getDate() + ' ' + date.toLocaleDateString([], {month: 'short'}));
+                solar.push(400 + Math.random() * 200);
+                wind.push(300 + Math.random() * 200);
+                hydro.push(200 + Math.random() * 100);
+            }
+
+            flowChart.data.labels = labels;
+            flowChart.data.datasets[0].data = solar;
+            flowChart.data.datasets[1].data = wind;
+            flowChart.data.datasets[2].data = hydro;
+            flowChart.update();
+        }
 
         // ── Anomaly Tracking ──
         const ctxAnomaly = document.getElementById('anomalyChart').getContext('2d');
